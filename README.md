@@ -21,7 +21,7 @@ a dedicated Database Administration team. From the application side though, this
 Let us start with a simple baseline Spring Boot [application](https://spring.io/guides/gs/rest-service/). Go ahead and clone
 the repository in full, as we will be starting from that completed project, and building Database interactions on top.
 
-``` shell
+``` text
 git clone https://github.com/spring-guides/gs-rest-service.git
 cd gs-rest-service
 git checkout 5cbc686 # To rollback to Spring Boot 2.6.x
@@ -30,10 +30,16 @@ git checkout 5cbc686 # To rollback to Spring Boot 2.6.x
 Open up the Maven project from `gs-rest-service/complete` in your IntelliJ environment, and launch the application. You should
 now be able to open up a browser, or use curl to hit the running endpoint. We will be using curl in this demonstration.
 
+``` text
+curl http://localhost:8080/greeting
+```
 ``` shell
-curl http://localhost:8080/greeting
 {"id":1,"content":"Hello, World!"}%
+```
+``` text
 curl http://localhost:8080/greeting
+```
+``` shell
 {"id":2,"content":"Hello, World!"}%
 ```
 
@@ -101,9 +107,6 @@ And now make a few modifications to `src/main/java/com/example/restservice/Greet
 import org.springframework.beans.factory.annotation.Autowired;
 ...
 
-    public Greeting greeting(...
-    ...
-
     @Autowired
     private CounterRepository counterRepository;
     
@@ -138,36 +141,76 @@ Documentation to these options are available at [https://jdbc.postgresql.org/doc
 
 You should be able to rerun the application now, and see that the new endpoint persists if you restart the application
 
+``` text
+curl "http://localhost:8080/greeting"
+```
 ``` shell
-curl "http://localhost:8080/greeting"
 {"id":1,"content":"Hello, World!"}%
+```
+``` text
 curl "http://localhost:8080/greeting"
+```
+``` shell
 {"id":2,"content":"Hello, World!"}%
+```
+``` text
 curl "http://localhost:8080/persistent_greeting"
+```
+``` shell
 {"id":1,"content":"Hello, World!"}%
+```
+``` text
 curl "http://localhost:8080/persistent_greeting"
+```
+``` shell
 {"id":2,"content":"Hello, World!"}%
-...
+```
+``` text
 # Restart application
 ...
 curl "http://localhost:8080/greeting"
+```
+``` shell
 {"id":1,"content":"Hello, World!"}%
+```
+``` text
 curl "http://localhost:8080/persistent_greeting"
+```
+``` shell
 {"id":3,"content":"Hello, World!"}%
 ```
 
 ## Implementing Data Model benchmarks
 
-TODO - Provide correct amount of the solution client for a good completion lab.
+Now that we have a working Database client, let's go ahead and expand a bit by putting together some simple data models and queries.
+We'll start with four different models solving the same problem. Given a Haystack table with a large amount of hay objects and one needle object, select the needle.
+This isn't too interesting of an example, but it will give us some interesting metrics to look at.
 
-Now that we have a working Database client, let's go ahead and expand a bit by putting together some simple data
-models and queries.
-We'll start with three different models solving the same problem. Given a Haystack table with a large amount of hay objects and one needle object, select the needle object.
-This isn't too interesting of a real world example, but will give us some interesting metrics to look at.
+We are implementing:
 
-<table>
-<tr><th>Table: haystack_uuid</th><th>Table: haystack</th></tr>
-<tr><td>
+1. Model 1: A Key-Value approach which could simulate a well formulated data model
+2. Model 2: A naive method of foreign key search which could simulate instances of table joins spanning a wide array of data
+3. Model 3: The first method, but with implementing indexes for faster searches
+4. Model 4: The second method, but with implementing indexes for faster searches
+
+
+Model 1
+
+Table: haystack
+
+| ID | UUID | VALUE |
+|----|------|-------|
+| 1  | aaa  | hay   |
+| 2  | bbb  | hay   |
+| 3  | ccc  | hay   |
+| ...| ...  | ...   |
+| n  | nnn  | needle|
+
+
+Model 2
+
+Table: haystackuuid
+
 | ID | UUID |
 |----|------|
 | 1  | aaa  |
@@ -176,7 +219,7 @@ This isn't too interesting of a real world example, but will give us some intere
 | ...| ...  |
 | n  | nnn  |
 
-</td><td>
+Table: haystack
 
 | ID | UUID | VALUE |
 |----|------|-------|
@@ -186,11 +229,10 @@ This isn't too interesting of a real world example, but will give us some intere
 | ...| ...  | ...   |
 | n  | nnn  | needle|
 
-</td></tr> </table>
 
-<table>
-<tr><th>Table: haystack</th></tr>
-<tr><td>
+Model 3
+
+Table: haystack
 
 | ID | UUID | VALUE |
 |----|------|-------|
@@ -200,11 +242,13 @@ This isn't too interesting of a real world example, but will give us some intere
 | ...| ...  | ...   |
 | n  | nnn  | needle|
 
-</td></tr> </table>
+Index: haystack_value_idx
 
-<table>
-<tr><th>Table: haystack</th><th>Index: haystack_index</th></tr>
-<tr><td>
+
+Model 4
+
+Table: haystackuuid
+
 | ID | UUID |
 |----|------|
 | 1  | aaa  |
@@ -213,7 +257,9 @@ This isn't too interesting of a real world example, but will give us some intere
 | ...| ...  |
 | n  | nnn  |
 
-</td><td>
+Index: haystackuuid_uuid_idx
+
+Table: haystack
 
 | ID | UUID | VALUE |
 |----|------|-------|
@@ -223,15 +269,21 @@ This isn't too interesting of a real world example, but will give us some intere
 | ...| ...  | ...   |
 | n  | nnn  | needle|
 
-</td></tr> </table>
+Index: haystack_value_idx
 
-We are implementing a naive method of foreign key search which could simulate instances of joins across a wide array of data, a Key-Value approach which could simulate a well formulated data model, and the first method but with implementing indexes for faster searches.
 
-Go ahead and implement the missing components in the provided demo application. Once this is complete, you should be able to see the benchmarking output, and have a better understanding of just how critical selecting an appropriate data model can be. As this case below
-shows, there can be an order of magnitude speedup by selecting the correct models. And this only grows as the table sizes increase.
 
-``` shell
+There is an incomplete client for this under `src` in this repo, and a complete working client in the `solution` branch.
+Go ahead and implement the missing components in the provided demo application. Incomplete sections are denoted with `TODO`.
+Once this is complete, you should be able to see the benchmarking output, and have a better understanding of just how critical selecting an appropriate data model can be.
+You can upload a screenshot of the benchmark output as a submission.
+
+As this example below shows, there can be an order of magnitude speedup by selecting the correct models. And this only grows as the table sizes increase.
+
+``` text
 curl "http://localhost:8080/benchmark"
+```
+``` shell
 Needle has value 5f6a9814-ff78-444a-89d0-8520aa7d484e at id 1000
 Seq Scan on haystack  (cost=0.00..11.75 rows=1 width=540) (actual time=0.126..0.126 rows=1 loops=1)
   Filter: ((value)::text = 'needle'::text)
