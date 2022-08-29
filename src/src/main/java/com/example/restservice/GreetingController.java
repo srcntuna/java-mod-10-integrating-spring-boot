@@ -48,19 +48,32 @@ public class GreetingController {
 		haystackRepository.truncateTable();
 		haystackUUIDRepository.truncateTable();
 
-		// TODO: Initialize Tables
-		// while (i < count) {
-		//	// get random uuid
-		//	//
-		//	// generate new Haystack and HaystackUUID objects using uuid
-		//	//
-		//	// save objects to their respective Database tables
-		//	//
-		//	i++;
-		// }
-		// // generate and save needle object at end
-		// //
-		// // 
+		while (i < count) {
+
+			// get random uuid
+			UUID uuid = randomUUID();
+
+			// generate new Haystack and HaystackUUID objects using uuid
+			Haystack newHaystack = new Haystack(uuid, "hay");
+
+			HaystackUUID haystackUUID = new HaystackUUID(uuid);
+
+			// save objects to their respective Database tables
+			haystackRepository.save(newHaystack);
+			haystackUUIDRepository.save(haystackUUID);
+
+			i++;
+		}
+
+		UUID uuid = randomUUID();
+
+		// generate new needle Haystack and HaystackUUID objects using uuid
+		Haystack newHaystack = new Haystack(uuid, "needle");
+
+		HaystackUUID haystackUUID = new HaystackUUID(uuid);
+
+		haystackRepository.save(newHaystack);
+		haystackUUIDRepository.save(haystackUUID);
 
 		// query1: Basic query with sequential scan
 		Haystack query1 = haystackRepository.seqScan();
@@ -81,14 +94,13 @@ public class GreetingController {
 		String query4Perf = haystackRepository.tableJoinPerf().stream().collect(Collectors.joining("\n"));
 
 		return new String(query1.toString() +
-							query1Perf + "\n---------------------------------------\n" +
-							query2.toString() +
-							query2Perf + "\n---------------------------------------\n" +
-							query3.toString() +
-							query3Perf + "\n---------------------------------------\n" +
-							query4.toString()) +
-							query4Perf;
+				query1Perf + "\n---------------------------------------\n" +
+				query2.toString() +
+				query2Perf + "\n---------------------------------------\n" +
+				query3.toString() +
+				query3Perf + "\n---------------------------------------\n" +
+				query4.toString()) +
+				query4Perf;
 	}
-
 
 }
